@@ -17,46 +17,39 @@
  */
 package org.keycloak.authorization.client.representation;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
 public class PermissionRequest {
 
-    @JsonProperty("resource_set_id")
     private String resourceSetId;
-
-    @JsonProperty("resource_set_name")
-    private String resourceSetName;
-
     private Set<String> scopes;
 
     public PermissionRequest() {
 
     }
 
-    public PermissionRequest(String resourceSetId, String resourceSetName, Set<String> scopes) {
+    public PermissionRequest(String resourceSetId, Set<String> scopes) {
         this.resourceSetId = resourceSetId;
-        this.resourceSetName = resourceSetName;
         this.scopes = scopes;
     }
 
-    public PermissionRequest(String resourceSetName) {
-        this.resourceSetName = resourceSetName;
-    }
-
-    public PermissionRequest(String resourceSetName, Set<String> scopes) {
-        this.resourceSetName = resourceSetName;
-        this.scopes = scopes;
+    public PermissionRequest(String resourceSetId) {
+        this.resourceSetId = resourceSetId;
     }
 
     public String getResourceSetId() {
         return this.resourceSetId;
     }
 
+    /**
+     * @deprecated UMA 1.0. Remove once we move to UMA 2.0.
+     */
+    @JsonProperty("resource_set_id")
     public void setResourceSetId(String resourceSetId) {
         this.resourceSetId = resourceSetId;
     }
@@ -65,15 +58,16 @@ public class PermissionRequest {
         return this.scopes;
     }
 
+    /**
+     * @deprecated UMA 1.0. Remove once we move to UMA 2.0.
+     */
+    @JsonProperty("scopes")
     public void setScopes(Set<String> scopes) {
         this.scopes = scopes;
     }
 
-    public String getResourceSetName() {
-        return this.resourceSetName;
-    }
-
-    public void setResourceSetName(String resourceSetName) {
-        this.resourceSetName = resourceSetName;
+    @JsonProperty("resource_scopes")
+    public void setResourceScopes(Set<String> scopes) {
+        this.scopes = scopes;
     }
 }

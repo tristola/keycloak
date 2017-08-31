@@ -32,11 +32,13 @@ import java.util.stream.Collectors;
 import org.jboss.logging.Logger;
 import org.keycloak.authorization.AuthorizationProvider;
 import org.keycloak.authorization.AuthorizationProviderFactory;
+import org.keycloak.authorization.model.PermissionTicket;
 import org.keycloak.authorization.model.Policy;
 import org.keycloak.authorization.model.Resource;
 import org.keycloak.authorization.model.ResourceServer;
 import org.keycloak.authorization.model.Scope;
 import org.keycloak.authorization.policy.provider.PolicyProviderFactory;
+import org.keycloak.authorization.store.PermissionTicketStore;
 import org.keycloak.authorization.store.PolicyStore;
 import org.keycloak.authorization.store.ResourceServerStore;
 import org.keycloak.authorization.store.ResourceStore;
@@ -106,6 +108,7 @@ import org.keycloak.representations.idm.UserFederationMapperRepresentation;
 import org.keycloak.representations.idm.UserFederationProviderRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.keycloak.representations.idm.authorization.AbstractPolicyRepresentation;
+import org.keycloak.representations.idm.authorization.PermissionTicketRepresentation;
 import org.keycloak.representations.idm.authorization.PolicyEnforcementMode;
 import org.keycloak.representations.idm.authorization.PolicyRepresentation;
 import org.keycloak.representations.idm.authorization.ResourceOwnerRepresentation;
@@ -2259,6 +2262,7 @@ public class RepresentationToModel {
             existing.setType(resource.getType());
             existing.setUri(resource.getUri());
             existing.setIconUri(resource.getIconUri());
+            existing.setOwnerManagedAccess(Boolean.TRUE.equals(resource.getOwnerManagedAccess()));
             existing.updateScopes(resource.getScopes().stream()
                     .map((ScopeRepresentation scope) -> toModel(scope, resourceServer, authorization))
                     .collect(Collectors.toSet()));
@@ -2296,11 +2300,12 @@ public class RepresentationToModel {
             owner.setId(ownerModel.getId());
         }
 
-        Resource model = resourceStore.create(resource.getName(), resourceServer, ownerId);
+        Resource model = resourceStore.create(resource.getName(), resourceServer, owner.getId());
 
         model.setType(resource.getType());
         model.setUri(resource.getUri());
         model.setIconUri(resource.getIconUri());
+        model.setOwnerManagedAccess(Boolean.TRUE.equals(resource.getOwnerManagedAccess()));
 
         Set<ScopeRepresentation> scopes = resource.getScopes();
 
@@ -2335,6 +2340,20 @@ public class RepresentationToModel {
         scope.setId(model.getId());
 
         return model;
+    }
+
+    public static PermissionTicket toModel(PermissionTicketRepresentation representation, String resourceServerId, AuthorizationProvider authorization) {
+        PermissionTicketStore ticketStore = authorization.getStoreFactory().getPermissionTicketStore();
+        PermissionTicket ticket = ticketStore.findById(representation.getId(), resourceServerId);
+        boolean granted = representation.isGranted();
+
+        if (granted && !ticket.isGranted()) {
+            ticket.setGrantedTimestamp(System.currentTimeMillis());
+        } else if (!granted) {
+            ticket.setGrantedTimestamp(null);
+        }
+
+        return ticket;
     }
 
     public static void importFederatedUser(KeycloakSession session, RealmModel newRealm, UserRepresentation userRep) {

@@ -1,6 +1,6 @@
 {
   "realm": "photoz",
-  "auth-server-url": "http://localhost:8080/auth",
+  "auth-server-url": "http://localhost:8180/auth",
   "ssl-required": "external",
   "resource": "photoz-restful-api",
   "bearer-only" : true,
@@ -8,6 +8,7 @@
     "secret": "secret"
   },
   "policy-enforcer": {
+    "apiVersion": "v2",
     "user-managed-access" : {},
     "paths": [
       {
@@ -16,10 +17,6 @@
           {
             "method": "POST",
             "scopes" : ["urn:photoz.com:scopes:album:create"]
-          },
-          {
-            "method": "GET",
-            "scopes" : ["urn:photoz.com:scopes:album:view"]
           }
         ]
       },

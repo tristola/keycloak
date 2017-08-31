@@ -23,28 +23,66 @@ package org.keycloak.authorization.authorization.representation;
  */
 public class AuthorizationRequest {
 
-    private AuthorizationRequestMetadata metadata;
     private String ticket;
     private String rpt;
+    private String claimToken;
+    private String claimTokenFormat;
+    private String pct;
+    private String scope;
 
-    public AuthorizationRequest(String ticket, String rpt) {
+    public AuthorizationRequest(String ticket) {
         this.ticket = ticket;
-        this.rpt = rpt;
     }
 
     public AuthorizationRequest() {
-        this(null, null);
+        this(null);
     }
 
     public String getTicket() {
         return this.ticket;
     }
 
+    public void setTicket(String ticket) {
+        this.ticket = ticket;
+    }
+
     public String getRpt() {
         return this.rpt;
     }
 
-    public AuthorizationRequestMetadata getMetadata() {
-        return metadata;
+    public void setRpt(String rpt) {
+        this.rpt = rpt;
+    }
+
+    public void setClaimToken(String claimToken) {
+        this.claimToken = claimToken;
+    }
+
+    public String getClaimToken() {
+        return claimToken;
+    }
+
+    public void setClaimTokenFormat(String claimTokenFormat) {
+        this.claimTokenFormat = claimTokenFormat;
+    }
+
+    public String getClaimTokenFormat() {
+        return claimTokenFormat;
+    }
+
+    public void setPct(String pct) {
+        this.pct = pct;
+    }
+
+    private String getPct() {
+        return pct;
+    }
+
+    public void setScope(String scope) {
+        this.scope = scope;
+    }
+
+    public String getScope() {
+        return scope;
     }
 }

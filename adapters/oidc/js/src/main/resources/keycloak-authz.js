@@ -18,7 +18,7 @@
 
 (function( window, undefined ) {
 
-    var KeycloakAuthorization = function (keycloak) {
+    var KeycloakAuthorization = function (keycloak, options) {
         var _instance = this;
         this.rpt = null;
 
@@ -30,6 +30,9 @@
                 if (request.readyState == 4) {
                     if (request.status == 200) {
                         _instance.config = JSON.parse(request.responseText);
+                        if (options) {
+                            _instance.config['apiVersion'] = options['apiVersion'];
+                        }
                     } else {
                         console.error('Could not obtain configuration from server.');
                     }
@@ -57,43 +60,83 @@
 
                         if (param[0] == 'ticket') {
                             var request = new XMLHttpRequest();
-
-                            request.open('POST', _instance.config.rpt_endpoint, true);
-                            request.setRequestHeader('Content-Type', 'application/json')
-                            request.setRequestHeader('Authorization', 'Bearer ' + keycloak.token)
-
-                            request.onreadystatechange = function () {
-                                if (request.readyState == 4) {
-                                    var status = request.status;
-
-                                    if (status >= 200 && status < 300) {
-                                        var rpt = JSON.parse(request.responseText).rpt;
-                                        _instance.rpt = rpt;
-                                        onGrant(rpt);
-                                    } else if (status == 403) {
-                                        if (onDeny) {
-                                            onDeny();
-                                        } else {
-                                            console.error('Authorization request was denied by the server.');
-                                        }
-                                    } else {
-                                        if (onError) {
-                                            onError();
-                                        } else {
-                                            console.error('Could not obtain authorization data from server.');
-                                        }
-                                    }
-                                }
-                            };
-
                             var ticket = param[1].substring(1, param[1].length - 1).trim();
 
-                            request.send(JSON.stringify(
-                                {
-                                    ticket: ticket,
-                                    rpt: _instance.rpt
+                            if (!_instance.config['apiVersion'] || _instance.config['apiVersion'] == 'v1') {
+                                request.open('POST', _instance.config.rpt_endpoint, true);
+                                request.setRequestHeader('Content-Type', 'application/json')
+                                request.setRequestHeader('Authorization', 'Bearer ' + keycloak.token)
+
+                                request.onreadystatechange = function () {
+                                    if (request.readyState == 4) {
+                                        var status = request.status;
+
+                                        if (status >= 200 && status < 300) {
+                                            var rpt = JSON.parse(request.responseText).rpt;
+                                            _instance.rpt = rpt;
+                                            onGrant(rpt);
+                                        } else if (status == 403) {
+                                            if (onDeny) {
+                                                onDeny();
+                                            } else {
+                                                console.error('Authorization request was denied by the server.');
+                                            }
+                                        } else {
+                                            if (onError) {
+                                                onError();
+                                            } else {
+                                                console.error('Could not obtain authorization data from server.');
+                                            }
+                                        }
+                                    }
+                                };
+
+                                request.send(JSON.stringify(
+                                    {
+                                        ticket: ticket,
+                                        rpt: _instance.rpt
+                                    }
+                                ));
+                            } else {
+                                request.open('POST', _instance.config.token_endpoint, true);
+                                request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+                                request.onreadystatechange = function () {
+                                    if (request.readyState == 4) {
+                                        var status = request.status;
+
+                                        if (status >= 200 && status < 300) {
+                                            var rpt = JSON.parse(request.responseText).rpt;
+                                            _instance.rpt = rpt;
+                                            onGrant(rpt);
+                                        } else if (status == 403) {
+                                            if (onDeny) {
+                                                onDeny();
+                                            } else {
+                                                console.error('Authorization request was denied by the server.');
+                                            }
+                                        } else {
+                                            if (onError) {
+                                                onError();
+                                            } else {
+                                                console.error('Could not obtain authorization data from server.');
+                                            }
+                                        }
+                                    }
+                                };
+
+                                var params = "grant_type=urn:ietf:params:oauth:grant-type:uma-ticket&" +
+                                            "client_id=" + keycloak.clientId + "&" +
+                                            "claim_token=" + keycloak.token + "&" +
+                                            "claim_token_format=http://openid.net/specs/openid-connect-core-1_0.html#IDToken&" +
+                                            "ticket=" + ticket;
+
+                                if (_instance.rpt) {
+                                    params += "&rpt=" + _instance.rpt;
                                 }
-                            ));
+
+                                request.send(params);
+                            }
                         }
                     }
                 } else if (wwwAuthenticateHeader.indexOf('KC_ETT') != -1) {
@@ -116,13 +159,11 @@
         };
 
         /**
-         * Obtains all entitlements from a Keycloak Server based on a give resourceServerId.
+         * Obtains all entitlements from a Keycloak Server based on a given resourceServerId.
          */
-        this.entitlement = function (resourceSeververId, entitlementRequest     ) {
+        this.entitlement = function (resourceSeververId, entitlementRequest) {
             this.then = function (onGrant, onDeny, onError) {
                 var request = new XMLHttpRequest();
-
-
 
                 request.onreadystatechange = function () {
                     if (request.readyState == 4) {

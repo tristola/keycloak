@@ -58,7 +58,8 @@ public class PolicyEnforcer {
     public PolicyEnforcer(KeycloakDeployment deployment, AdapterConfig adapterConfig) {
         this.deployment = deployment;
         this.enforcerConfig = adapterConfig.getPolicyEnforcerConfig();
-        this.authzClient = AuthzClient.create(new Configuration(adapterConfig.getAuthServerUrl(), adapterConfig.getRealm(), adapterConfig.getResource(), adapterConfig.getCredentials(), deployment.getClient()), new ClientAuthenticator() {
+        Configuration configuration = new Configuration(enforcerConfig.getApiVersion(), adapterConfig.getAuthServerUrl(), adapterConfig.getRealm(), adapterConfig.getResource(), adapterConfig.getCredentials(), deployment.getClient());
+        this.authzClient = AuthzClient.create(configuration, new ClientAuthenticator() {
             @Override
             public void configureClientCredentials(HashMap<String, String> requestParams, HashMap<String, String> requestHeaders) {
                 ClientCredentialsProviderUtils.setClientCredentials(PolicyEnforcer.this.deployment, requestHeaders, requestParams);
@@ -236,7 +237,7 @@ public class PolicyEnforcer {
 
         pathConfig.setPath(uri);
 
-        List<String> scopeNames = new ArrayList<>();
+        Set<String> scopeNames = new HashSet<>();
 
         for (ScopeRepresentation scope : resourceDescription.getScopes()) {
             scopeNames.add(scope.getName());

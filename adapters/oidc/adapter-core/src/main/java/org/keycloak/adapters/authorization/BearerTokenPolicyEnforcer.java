@@ -64,7 +64,7 @@ public class BearerTokenPolicyEnforcer extends AbstractPolicyEnforcer {
     private void challengeUmaAuthentication(PathConfig pathConfig, Set<String> requiredScopes, OIDCHttpFacade facade) {
         HttpFacade.Response response = facade.getResponse();
         AuthzClient authzClient = getAuthzClient();
-        String ticket = getPermissionTicket(pathConfig, requiredScopes, authzClient);
+        String ticket = getPermissionTicket(pathConfig, requiredScopes, authzClient, facade);
         String clientId = authzClient.getConfiguration().getResource();
         String authorizationServerUri = authzClient.getServerConfiguration().getIssuer().toString() + "/authz/authorize";
         response.setStatus(401);
@@ -74,12 +74,13 @@ public class BearerTokenPolicyEnforcer extends AbstractPolicyEnforcer {
         }
     }
 
-    private String getPermissionTicket(PathConfig pathConfig, Set<String> requiredScopes, AuthzClient authzClient) {
-        ProtectionResource protection = authzClient.protection();
+    private String getPermissionTicket(PathConfig pathConfig, Set<String> requiredScopes, AuthzClient authzClient, OIDCHttpFacade httpFacade) {
+        String accessToken = httpFacade.getSecurityContext().getTokenString();
+        ProtectionResource protection = authzClient.protection(accessToken);
         PermissionResource permission = protection.permission();
         PermissionRequest permissionRequest = new PermissionRequest();
         permissionRequest.setResourceSetId(pathConfig.getId());
         permissionRequest.setScopes(requiredScopes);
-        return permission.forResource(permissionRequest).getTicket();
+        return permission.create(permissionRequest).getTicket();
     }
 }

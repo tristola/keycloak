@@ -64,7 +64,7 @@ public abstract class DecisionResultCollector implements Decision<DefaultEvaluat
             if (deniedCount == 0) {
                 result.setStatus(Effect.PERMIT);
             } else {
-                result.setStatus(Effect.DENY);
+                onDeny(result);
             }
         }
 
@@ -72,6 +72,10 @@ public abstract class DecisionResultCollector implements Decision<DefaultEvaluat
     }
 
     protected abstract void onComplete(List<Result> results);
+
+    protected void onDeny(Result result) {
+        result.setStatus(Effect.DENY);
+    }
 
     private boolean isGranted(Result.PolicyResult policyResult) {
         List<Result.PolicyResult> values = policyResult.getAssociatedPolicies();

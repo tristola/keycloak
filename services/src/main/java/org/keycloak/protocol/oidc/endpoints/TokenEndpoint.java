@@ -23,6 +23,9 @@ import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.OAuthErrorException;
 import org.keycloak.authentication.AuthenticationProcessor;
+import org.keycloak.authorization.AuthorizationProvider;
+import org.keycloak.authorization.authorization.AuthorizationTokenService;
+import org.keycloak.authorization.authorization.representation.AuthorizationRequest;
 import org.keycloak.broker.provider.IdentityProvider;
 import org.keycloak.broker.provider.TokenExchangeTo;
 import org.keycloak.common.ClientConnection;
@@ -71,6 +74,8 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -88,7 +93,7 @@ public class TokenEndpoint {
     private Map<String, String> clientAuthAttributes;
 
     private enum Action {
-        AUTHORIZATION_CODE, REFRESH_TOKEN, PASSWORD, CLIENT_CREDENTIALS, TOKEN_EXCHANGE
+        AUTHORIZATION_CODE, REFRESH_TOKEN, PASSWORD, CLIENT_CREDENTIALS, TOKEN_EXCHANGE, PERMISSION
     }
 
     // https://tools.ietf.org/html/rfc7636#section-4.2
@@ -144,6 +149,8 @@ public class TokenEndpoint {
                 return buildClientCredentialsGrant();
             case TOKEN_EXCHANGE:
                 return buildTokenExchange();
+            case PERMISSION:
+                return buildPermissionToken();
         }
 
         throw new RuntimeException("Unknown action " + action);
@@ -210,7 +217,9 @@ public class TokenEndpoint {
         } else if (grantType.equals(OAuth2Constants.TOKEN_EXCHANGE_GRANT_TYPE)) {
             event.event(EventType.TOKEN_EXCHANGE);
             action = Action.TOKEN_EXCHANGE;
-
+        } else if (grantType.equals(OAuth2Constants.UMA_GRANT_TYPE)) {
+            event.event(EventType.PERMISSION_TOKEN);
+            action = Action.PERMISSION;
         } else {
             throw new ErrorResponseException(Errors.INVALID_REQUEST, "Invalid " + OIDCLoginProtocol.GRANT_TYPE_PARAM, Response.Status.BAD_REQUEST);
         }
@@ -692,6 +701,30 @@ public class TokenEndpoint {
         return Cors.add(request, Response.ok(res, MediaType.APPLICATION_JSON_TYPE)).auth().allowedOrigins(uriInfo, client).allowedMethods("POST").exposedHeaders(Cors.ACCESS_CONTROL_ALLOW_METHODS).build();
     }
 
+    public Response buildPermissionToken() {
+        event.detail(Details.AUTH_METHOD, "oauth_credentials");
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest(formParams.getFirst("ticket"));
+
+        List<String> claimToken = formParams.get("claim_token");
+
+        if (claimToken == null) {
+            authorizationRequest.setClaimToken(AccessTokenResponse.class.cast(buildClientCredentialsGrant().getEntity()).getToken());
+        } else {
+            authorizationRequest.setClaimToken(claimToken.get(0));
+        }
+
+        authorizationRequest.setClaimTokenFormat(formParams.getFirst("claim_token_format"));
+        authorizationRequest.setPct(formParams.getFirst("pct"));
+        authorizationRequest.setRpt(formParams.getFirst("rpt"));
+        authorizationRequest.setScope(formParams.getFirst("scope"));
+
+        AuthorizationTokenService authorizationTokenService = new AuthorizationTokenService(session.getProvider(AuthorizationProvider.class));
+
+        ResteasyProviderFactory.getInstance().injectProperties(authorizationTokenService);
+
+        return authorizationTokenService.authorize(authorizationRequest);
+    }
 
     // https://tools.ietf.org/html/rfc7636#section-4.1
     private boolean isValidPkceCodeVerifier(String codeVerifier) {

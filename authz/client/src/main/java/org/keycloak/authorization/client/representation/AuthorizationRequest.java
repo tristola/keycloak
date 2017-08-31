@@ -24,25 +24,64 @@ public class AuthorizationRequest {
 
     private String ticket;
     private String rpt;
-
-    public AuthorizationRequest(String ticket, String rpt) {
-        this.ticket = ticket;
-        this.rpt = rpt;
-    }
+    private String claimToken;
+    private String claimTokenFormat;
+    private String pct;
+    private String scope;
 
     public AuthorizationRequest(String ticket) {
-        this(ticket, null);
+        this.ticket = ticket;
     }
 
     public AuthorizationRequest() {
-        this(null, null);
+        this(null);
     }
 
     public String getTicket() {
         return this.ticket;
     }
 
+    public void setTicket(String ticket) {
+        this.ticket = ticket;
+    }
+
     public String getRpt() {
         return this.rpt;
+    }
+
+    public void setRpt(String rpt) {
+        this.rpt = rpt;
+    }
+
+    public void setClaimToken(String claimToken) {
+        this.claimToken = claimToken;
+    }
+
+    public String getClaimToken() {
+        return claimToken;
+    }
+
+    public void setClaimTokenFormat(String claimTokenFormat) {
+        this.claimTokenFormat = claimTokenFormat;
+    }
+
+    public String getClaimTokenFormat() {
+        return claimTokenFormat;
+    }
+
+    public void setPct(String pct) {
+        this.pct = pct;
+    }
+
+    public String getPct() {
+        return pct;
+    }
+
+    public void setScope(String scope) {
+        this.scope = scope;
+    }
+
+    public String getScope() {
+        return scope;
     }
 }

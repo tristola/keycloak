@@ -72,7 +72,7 @@ public class HttpMethod<R> {
     }
 
     public R execute(HttpResponseProcessor<R> responseProcessor) {
-        byte[] bytes = null;
+        String body = null;
 
         try {
             for (Map.Entry<String, String> header : this.headers.entrySet()) {
@@ -85,25 +85,25 @@ public class HttpMethod<R> {
             HttpEntity entity = response.getEntity();
 
             if (entity != null) {
-                bytes = EntityUtils.toByteArray(entity);
+                body = EntityUtils.toString(entity);
             }
 
             StatusLine statusLine = response.getStatusLine();
             int statusCode = statusLine.getStatusCode();
 
             if (statusCode < 200 || statusCode >= 300) {
-                throw new HttpResponseException("Unexpected response from server: " + statusCode + " / " + statusLine.getReasonPhrase(), statusCode, statusLine.getReasonPhrase(), bytes);
+                throw new HttpResponseException("Unexpected response from server: " + statusCode + " / " + statusLine.getReasonPhrase() + " / " + body, statusCode, statusLine.getReasonPhrase(), body.getBytes());
             }
 
-            if (bytes == null) {
+            if (body == null) {
                 return null;
             }
 
-            return responseProcessor.process(bytes);
+            return responseProcessor.process(body.getBytes());
         } catch (HttpResponseException e) {
             throw e;
         } catch (Exception e) {
-            throw new RuntimeException("Error executing http method [" + builder + "]. Response : " + String.valueOf(bytes), e);
+            throw new RuntimeException("Error executing http method [" + builder + "]. Response : " + String.valueOf(body), e);
         }
     }
 
@@ -128,7 +128,9 @@ public class HttpMethod<R> {
     }
 
     public HttpMethod<R> param(String name, String value) {
-        this.params.put(name, value);
+        if (value != null) {
+            params.put(name, value);
+        }
         return this;
     }
 

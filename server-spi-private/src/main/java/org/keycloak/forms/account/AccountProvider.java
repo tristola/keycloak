@@ -67,5 +67,5 @@ public interface AccountProvider extends Provider {
 
     AccountProvider setStateChecker(String stateChecker);
 
-    AccountProvider setFeatures(boolean social, boolean events, boolean passwordUpdateSupported);
+    AccountProvider setFeatures(boolean social, boolean events, boolean passwordUpdateSupported, boolean authorizationSupported);
 }

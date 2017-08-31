@@ -104,8 +104,9 @@ public class ResourceServerService {
     @Produces("application/json")
     public Response update(ResourceServerRepresentation server) {
         this.auth.realm().requireManageAuthorization();
-        this.resourceServer.setAllowRemoteResourceManagement(server.isAllowRemoteResourceManagement());
-        this.resourceServer.setPolicyEnforcementMode(server.getPolicyEnforcementMode());
+        server.setId(resourceServer.getId());
+        server.setClientId(resourceServer.getClientId());
+        RepresentationToModel.toModel(server, authorization);
         audit(OperationType.UPDATE, uriInfo, false);
         return Response.noContent().build();
     }

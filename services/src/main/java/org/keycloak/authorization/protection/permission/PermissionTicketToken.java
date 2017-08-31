@@ -21,38 +21,74 @@ import org.keycloak.TokenIdGenerator;
 import org.keycloak.representations.AccessToken;
 import org.keycloak.representations.JsonWebToken;
 import org.keycloak.representations.idm.authorization.ResourceRepresentation;
+import org.keycloak.representations.idm.authorization.ScopeRepresentation;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
-public class PermissionTicket extends JsonWebToken {
+public class PermissionTicketToken extends JsonWebToken {
 
-    private final List<ResourceRepresentation> resources = new ArrayList<>();
+    private final List<ResourcePermission> resources;
     private final String resourceServerId;
 
-    public PermissionTicket() {
+    public PermissionTicketToken() {
         this.resourceServerId = null;
+        this.resources = null;
     }
 
-    public PermissionTicket(List<ResourceRepresentation> resources, String resourceServerId, AccessToken accessToken) {
+    public PermissionTicketToken(List<ResourcePermission> resources, String resourceServerId, AccessToken accessToken) {
         id(TokenIdGenerator.generateId());
         subject(accessToken.getSubject());
         expiration(accessToken.getExpiration());
         notBefore(accessToken.getNotBefore());
         issuedAt(accessToken.getIssuedAt());
         issuedFor(accessToken.getIssuedFor());
-        this.resources.addAll(resources);
+        this.resources = resources;
         this.resourceServerId = resourceServerId;
     }
 
-    public List<ResourceRepresentation> getResources() {
+    public List<ResourcePermission> getResources() {
         return this.resources;
     }
 
     public String getResourceServerId() {
         return this.resourceServerId;
+    }
+
+    public static class ResourcePermission {
+
+        private String resourceId;
+        private Set<String> scopes;
+        private String ticket;
+
+        public ResourcePermission() {
+        }
+
+        public ResourcePermission(String ticket) {
+            this.ticket = ticket;
+        }
+
+        public ResourcePermission(String resourceId, Set<String> scopes) {
+            this.resourceId = resourceId;
+            this.scopes = scopes;
+        }
+
+        public String getResourceId() {
+            return resourceId;
+        }
+
+        public Set<String> getScopes() {
+            return scopes;
+        }
+
+        public String getTicket() {
+            return ticket;
+        }
     }
 }

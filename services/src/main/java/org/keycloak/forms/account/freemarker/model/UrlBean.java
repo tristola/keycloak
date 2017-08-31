@@ -17,11 +17,11 @@
 
 package org.keycloak.forms.account.freemarker.model;
 
+import java.net.URI;
+
 import org.keycloak.models.RealmModel;
 import org.keycloak.services.Urls;
 import org.keycloak.theme.Theme;
-
-import java.net.URI;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
@@ -86,6 +86,22 @@ public class UrlBean {
 
     public String getLogoutUrl() {
         return Urls.accountLogout(baseQueryURI, currentURI, realm).toString();
+    }
+
+    public String getResourceUrl() {
+        return Urls.accountResourcesPage(baseQueryURI, realm).toString();
+    }
+
+    public String getResourceDetailUrl(String id) {
+        return Urls.accountResourceDetailPage(id, baseQueryURI, realm).toString();
+    }
+
+    public String getResourceGrant(String id) {
+        return Urls.accountResourceGrant(id, baseQueryURI, realm).toString();
+    }
+
+    public String getResourceShare(String id) {
+        return Urls.accountResourceShare(id, baseQueryURI, realm).toString();
     }
 
     public String getResourcesPath() {

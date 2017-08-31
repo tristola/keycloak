@@ -51,6 +51,7 @@ import java.util.Set;
 @NamedQueries(
         {
                 @NamedQuery(name="findResourceIdByOwner", query="select r.id from ResourceEntity r where r.resourceServer.id = :serverId and r.owner = :owner"),
+                @NamedQuery(name="findAnyResourceIdByOwner", query="select r.id from ResourceEntity r where r.owner = :owner"),
                 @NamedQuery(name="findResourceIdByUri", query="select r.id from ResourceEntity r where  r.resourceServer.id = :serverId  and r.uri = :uri"),
                 @NamedQuery(name="findResourceIdByName", query="select r.id from ResourceEntity r where  r.resourceServer.id = :serverId  and r.name = :name"),
                 @NamedQuery(name="findResourceIdByType", query="select r.id from ResourceEntity r where  r.resourceServer.id = :serverId  and r.type = :type"),
@@ -80,6 +81,9 @@ public class ResourceEntity {
 
     @Column(name = "OWNER")
     private String owner;
+
+    @Column(name = "OWNER_MANAGED_ACCESS")
+    private boolean ownerManagedAccess;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "RESOURCE_SERVER_ID")
@@ -151,6 +155,14 @@ public class ResourceEntity {
 
     public void setOwner(String owner) {
         this.owner = owner;
+    }
+
+    public void setOwnerManagedAccess(boolean ownerManagedAccess) {
+        this.ownerManagedAccess = ownerManagedAccess;
+    }
+
+    public boolean isOwnerManagedAccess() {
+        return ownerManagedAccess;
     }
 
     public List<PolicyEntity> getPolicies() {

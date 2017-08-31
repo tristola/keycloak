@@ -20,6 +20,7 @@ import org.jboss.arquillian.container.test.api.Deployer;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.graphene.page.Page;
 import org.jboss.arquillian.test.api.ArquillianResource;
+import org.jboss.shrinkwrap.api.asset.FileAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -41,6 +42,7 @@ import org.keycloak.representations.idm.authorization.ResourceServerRepresentati
 import org.keycloak.testsuite.ProfileAssume;
 import org.keycloak.testsuite.adapter.AbstractExampleAdapterTest;
 import org.keycloak.testsuite.adapter.page.PhotozClientAuthzTestApp;
+import org.keycloak.testsuite.util.WaitUtils;
 import org.keycloak.util.JsonSerialization;
 
 import java.io.File;
@@ -67,7 +69,7 @@ import static org.keycloak.testsuite.util.WaitUtils.waitUntilElement;
 public abstract class AbstractPhotozExampleAdapterTest extends AbstractExampleAdapterTest {
 
     private static final String REALM_NAME = "photoz";
-    private static final String RESOURCE_SERVER_ID = "photoz-restful-api";
+    protected static final String RESOURCE_SERVER_ID = "photoz-restful-api";
     private static int TOKEN_LIFESPAN_LEEWAY = 3; // seconds
 
     @ArquillianResource
@@ -106,7 +108,13 @@ public abstract class AbstractPhotozExampleAdapterTest extends AbstractExampleAd
 
     @Deployment(name = RESOURCE_SERVER_ID, managed = false, testable = false)
     public static WebArchive deploymentResourceServer() throws IOException {
-        return exampleDeployment(RESOURCE_SERVER_ID);
+        WebArchive deployment = exampleDeployment(RESOURCE_SERVER_ID);
+
+        if ("v2".equals(System.getProperty("authz.service.version", "v2"))) {
+            deployment.add(new FileAsset(new File(TEST_APPS_HOME_DIR + "/photoz/photoz-restful-api-v2-keycloak.json")), "WEB-INF/keycloak.json");
+        }
+
+        return deployment;
     }
 
     @Override
@@ -634,6 +642,7 @@ public abstract class AbstractPhotozExampleAdapterTest extends AbstractExampleAd
             assertTrue(driver.getPageSource().contains("urn:photoz.com:scopes:album:admin:manage"));
             
             clientPage.requestEntitlement();
+            WaitUtils.pause(2000);
             String pageSource = driver.getPageSource();
             assertTrue(pageSource.contains("urn:photoz.com:scopes:album:view"));
             assertFalse(pageSource.contains("urn:photoz.com:scopes:album:admin:manage"));

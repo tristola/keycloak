@@ -17,6 +17,7 @@
  */
 package org.keycloak.authorization.client.resource;
 
+import org.keycloak.authorization.client.Configuration;
 import org.keycloak.authorization.client.representation.TokenIntrospectionResponse;
 import org.keycloak.authorization.client.util.Http;
 
@@ -27,8 +28,10 @@ public class ProtectionResource {
 
     private final String pat;
     private final Http http;
+    private Configuration configuration;
 
-    public ProtectionResource(Http http, String pat) {
+    public ProtectionResource(Http http, Configuration configuration, String pat) {
+        this.configuration = configuration;
         if (pat == null) {
             throw new RuntimeException("No access token was provided when creating client for Protection API.");
         }
@@ -38,11 +41,11 @@ public class ProtectionResource {
     }
 
     public ProtectedResource resource() {
-        return new ProtectedResource(http, pat);
+        return new ProtectedResource(http, configuration, pat);
     }
 
     public PermissionResource permission() {
-        return new PermissionResource(http, pat);
+        return new PermissionResource(http, configuration, pat);
     }
 
     public TokenIntrospectionResponse introspectRequestingPartyToken(String rpt) {

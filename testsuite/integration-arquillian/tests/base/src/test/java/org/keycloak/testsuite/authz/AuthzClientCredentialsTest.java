@@ -109,11 +109,8 @@ public class AuthzClientCredentialsTest extends AbstractAuthzTest {
     public void testSuccessfulAuthorizationRequest() throws Exception {
         AuthzClient authzClient = getAuthzClient("keycloak-with-jwt-authentication.json");
         ProtectionResource protection = authzClient.protection();
-        PermissionRequest request = new PermissionRequest();
-
-        request.setResourceSetName("Default Resource");
-
-        PermissionResponse ticketResponse = protection.permission().forResource(request);
+        PermissionRequest request = new PermissionRequest("Default Resource");
+        PermissionResponse ticketResponse = protection.permission().create(request);
         String ticket = ticketResponse.getTicket();
 
         AuthorizationResponse authorizationResponse = authzClient.authorization("marta", "password").authorize(new AuthorizationRequest(ticket));
@@ -137,11 +134,8 @@ public class AuthzClientCredentialsTest extends AbstractAuthzTest {
     public void failUserWithoutUmaAuthorizationScope() throws Exception {
         AuthzClient authzClient = getAuthzClient("keycloak-with-jwt-authentication.json");
         ProtectionResource protection = authzClient.protection();
-        PermissionRequest request = new PermissionRequest();
-
-        request.setResourceSetName("Default Resource");
-
-        PermissionResponse ticketResponse = protection.permission().forResource(request);
+        PermissionRequest request = new PermissionRequest("Default Resource");
+        PermissionResponse ticketResponse = protection.permission().create(request);
         String ticket = ticketResponse.getTicket();
 
         try {

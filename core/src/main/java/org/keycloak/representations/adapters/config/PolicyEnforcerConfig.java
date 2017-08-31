@@ -24,11 +24,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
  */
 public class PolicyEnforcerConfig {
+
+    private String apiVersion;
 
     @JsonProperty("create-resources")
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -113,13 +116,17 @@ public class PolicyEnforcerConfig {
         this.onDenyRedirectTo = onDenyRedirectTo;
     }
 
+    public String getApiVersion() {
+        return apiVersion;
+    }
+
     public static class PathConfig {
 
         private String name;
         private String type;
         private String path;
         private List<MethodConfig> methods = new ArrayList<>();
-        private List<String> scopes = Collections.emptyList();
+        private Set<String> scopes = Collections.emptySet();
         private String id;
 
         @JsonProperty("enforcement-mode")
@@ -136,11 +143,11 @@ public class PolicyEnforcerConfig {
             this.path = path;
         }
 
-        public List<String> getScopes() {
+        public Set<String> getScopes() {
             return this.scopes;
         }
 
-        public void setScopes(List<String> scopes) {
+        public void setScopes(Set<String> scopes) {
             this.scopes = scopes;
         }
 

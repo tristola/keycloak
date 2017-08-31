@@ -20,6 +20,7 @@ package org.keycloak.authorization.admin;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -81,9 +82,6 @@ public class PolicyEvaluationService {
 
     private final AuthorizationProvider authorization;
     private final AdminPermissionEvaluator auth;
-    @Context
-    private HttpRequest httpRequest;
-
     private final ResourceServer resourceServer;
 
     PolicyEvaluationService(ResourceServer resourceServer, AuthorizationProvider authorization, AdminPermissionEvaluator auth) {
@@ -170,7 +168,7 @@ public class PolicyEvaluationService {
             Set<ScopeRepresentation> givenScopes = resource.getScopes();
 
             if (givenScopes == null) {
-                givenScopes = new HashSet();
+                givenScopes = Collections.emptySet();
             }
 
             Set<String> scopeNames = givenScopes.stream().map(ScopeRepresentation::getName).collect(Collectors.toSet());

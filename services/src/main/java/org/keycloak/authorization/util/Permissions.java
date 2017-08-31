@@ -101,14 +101,18 @@ public final class Permissions {
             }
         } else {
             ScopeStore scopeStore = authorization.getStoreFactory().getScopeStore();
-            scopes = requestedScopes.stream().map(scopeName -> {
-                Scope byName = scopeStore.findByName(scopeName, resource.getResourceServer().getId());
+            scopes = requestedScopes.stream().map(scopeId -> {
+                Scope scope = scopeStore.findById(scopeId, resource.getResourceServer().getId());
 
-                if (byName == null) {
-                    throw new RuntimeException("Invalid scope [" + scopeName + "].");
+                if (scope == null) {
+                    scope = scopeStore.findByName(scopeId, resource.getResourceServer().getId());
+
+                    if (scope == null) {
+                        throw new RuntimeException("Invalid scope [" + scopeId + "].");
+                    }
                 }
 
-                return byName;
+                return scope;
             }).collect(Collectors.toList());
         }
         permissions.add(new ResourcePermission(resource, scopes, resource.getResourceServer()));
@@ -142,6 +146,10 @@ public final class Permissions {
         return permissions;
     }
 
+    public static List<Permission> permits(List<Result> evaluation, AuthorizationProvider authorizationProvider, ResourceServer resourceServer) {
+        return permits(evaluation, null, authorizationProvider, resourceServer);
+    }
+
     public static List<Permission> permits(List<Result> evaluation, AuthorizationRequestMetadata metadata, AuthorizationProvider authorizationProvider, ResourceServer resourceServer) {
         Map<String, Permission> permissions = new LinkedHashMap<>();
 
@@ -160,12 +168,20 @@ public final class Permissions {
                 if (Effect.PERMIT.equals(policyResult.getStatus())) {
                     if (isScopePermission(policy)) {
                         // try to grant any scope from a scope-based permission
-                        grantedScopes.addAll(policyScopes);
+                        if (policyResult.getScopes().isEmpty()) {
+                            grantedScopes.addAll(policyScopes);
+                        } else {
+                            grantedScopes.addAll(policyResult.getScopes());
+                        }
                     } else if (isResourcePermission(policy)) {
                         // we assume that all requested scopes should be granted given that we are processing a resource-based permission.
                         // Later they will be filtered based on any denied scope, if any.
                         // TODO: we could probably provide a configuration option to let users decide whether or not a resource-based permission should grant all scopes associated with the resource.
-                        grantedScopes.addAll(permission.getScopes());
+                        if (policyResult.getScopes().isEmpty()) {
+                            grantedScopes.addAll(permission.getScopes());
+                        } else {
+                            grantedScopes.addAll(policyResult.getScopes());
+                        }
                     }
                     deniedCount--;
                 } else {

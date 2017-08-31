@@ -149,9 +149,7 @@ public class AuthorizationClientExample {
 
         // create an entitlement request
         EntitlementRequest request = new EntitlementRequest();
-        PermissionRequest permission = new PermissionRequest();
-
-        permission.setResourceSetName("Default Resource");
+        PermissionRequest permission = new PermissionRequest("Default Resource");
 
         request.addPermission(permission);
 

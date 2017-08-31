@@ -113,9 +113,12 @@ public class KeycloakAdapterPolicyEnforcer extends AbstractPolicyEnforcer {
                 permissionRequest.setResourceSetId(pathConfig.getId());
                 permissionRequest.setScopes(requiredScopes);
 
-                PermissionResponse permissionResponse = authzClient.protection().permission().forResource(permissionRequest);
+                PermissionResponse permissionResponse = authzClient.protection(accessToken).permission().create(permissionRequest);
                 AuthorizationRequest authzRequest = new AuthorizationRequest(permissionResponse.getTicket());
-                AuthorizationResponse authzResponse = authzClient.authorization(accessToken).authorize(authzRequest);
+
+                authzRequest.setClaimToken(accessToken);
+
+                AuthorizationResponse authzResponse = authzClient.authorization().authorize(authzRequest);
 
                 if (authzResponse != null) {
                     return AdapterRSATokenVerifier.verifyToken(authzResponse.getRpt(), deployment);
@@ -132,10 +135,9 @@ public class KeycloakAdapterPolicyEnforcer extends AbstractPolicyEnforcer {
                 } else {
                     EntitlementRequest request = new EntitlementRequest();
                     PermissionRequest permissionRequest = new PermissionRequest();
-                    permissionRequest.setResourceSetId(pathConfig.getId());
-                    permissionRequest.setResourceSetName(pathConfig.getName());
-                    permissionRequest.setScopes(new HashSet<>(pathConfig.getScopes()));
-                    LOGGER.debugf("Sending entitlements request: resource_set_id [%s], resource_set_name [%s], scopes [%s].", permissionRequest.getResourceSetId(), permissionRequest.getResourceSetName(), permissionRequest.getScopes());
+                    permissionRequest.setResourceSetId(pathConfig.getId() != null ? pathConfig.getId() : pathConfig.getName());
+                    permissionRequest.setScopes(pathConfig.getScopes());
+                    LOGGER.debugf("Sending entitlements request: resource_set_id [%s], scopes [%s].", permissionRequest.getResourceSetId(), permissionRequest.getScopes());
                     request.addPermission(permissionRequest);
                     EntitlementResponse authzResponse = authzClient.entitlement(accessToken).get(authzClient.getConfiguration().getResource(), request);
                     return AdapterRSATokenVerifier.verifyToken(authzResponse.getRpt(), deployment);

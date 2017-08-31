@@ -34,6 +34,10 @@
             keycloak.logout();
         };
 
+        this.account = function () {
+            keycloak.accountManagement();
+        }
+
         this.hasRole = function (name) {
             if (keycloak && keycloak.hasRealmRole(name)) {
                 return true;
@@ -45,7 +49,9 @@
             return this.hasRole("admin");
         };
 
-        this.authorization = new KeycloakAuthorization(keycloak);
+        this.authorization = new KeycloakAuthorization(keycloak, {
+            apiVersion: "v2"
+        });
     }
 
     if ( typeof module === "object" && module && typeof module.exports === "object" ) {

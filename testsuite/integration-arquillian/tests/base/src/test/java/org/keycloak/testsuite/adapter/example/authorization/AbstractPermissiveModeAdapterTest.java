@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 
 import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.shrinkwrap.api.asset.FileAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Test;
 
@@ -32,8 +33,14 @@ public abstract class AbstractPermissiveModeAdapterTest extends AbstractServletA
 
     @Deployment(name = RESOURCE_SERVER_ID, managed = false)
     public static WebArchive deployment() throws IOException {
-        return exampleDeployment(RESOURCE_SERVER_ID)
+        WebArchive deployment = exampleDeployment(RESOURCE_SERVER_ID)
                 .addAsWebInfResource(new File(TEST_APPS_HOME_DIR + "/servlet-authz-app/servlet-authz-realm.json"), "keycloak.-permissive-authz-service.json");
+
+        if ("v2".equals(System.getProperty("authz.service.version", "v2"))) {
+            deployment.add(new FileAsset(new File(TEST_APPS_HOME_DIR + "/servlet-authz-app/servlet-authz-app-v2-keycloak.json")), "WEB-INF/keycloak.json");
+        }
+
+        return deployment;
     }
 
     @Test

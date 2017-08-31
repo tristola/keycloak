@@ -102,11 +102,9 @@ public class RequireUmaAuthorizationScopeTest extends AbstractAuthzTest {
     @Test
     public void testAccessTokenWithUmaAuthorization() {
         AuthzClient authzClient = getAuthzClient();
-        PermissionRequest request = new PermissionRequest();
+        PermissionRequest request = new PermissionRequest("Resource A");
 
-        request.setResourceSetName("Resource A");
-
-        String ticket = authzClient.protection().permission().forResource(request).getTicket();
+        String ticket = authzClient.protection().permission().create(request).getTicket();
         AuthorizationResponse response = authzClient.authorization("marta", "password").authorize(new AuthorizationRequest(ticket));
 
         assertNotNull(response.getRpt());
@@ -115,11 +113,8 @@ public class RequireUmaAuthorizationScopeTest extends AbstractAuthzTest {
     @Test
     public void failAccessTokenWithoutUmaAuthorization() {
         AuthzClient authzClient = getAuthzClient();
-        PermissionRequest request = new PermissionRequest();
-
-        request.setResourceSetName("Resource A");
-
-        String ticket = authzClient.protection().permission().forResource(request).getTicket();
+        PermissionRequest request = new PermissionRequest("Resource A");
+        String ticket = authzClient.protection().permission().create(request).getTicket();
 
         try {
             authzClient.authorization("kolo", "password").authorize(new AuthorizationRequest(ticket));

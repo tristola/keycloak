@@ -24,6 +24,7 @@ import org.keycloak.authorization.entitlement.EntitlementService;
 import org.keycloak.authorization.protection.ProtectionService;
 
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
@@ -45,9 +46,9 @@ public class AuthorizationService {
         return service;
     }
 
-    @Path("/protection")
-    public Object getProtectionService() {
-        ProtectionService service = new ProtectionService(this.authorization);
+    @Path("/protection/{resource_server_id}")
+    public Object getProtectionService(@PathParam("resource_server_id") String resourceServerId) {
+        ProtectionService service = new ProtectionService(authorization, resourceServerId);
 
         ResteasyProviderFactory.getInstance().injectProperties(service);
 
@@ -55,7 +56,7 @@ public class AuthorizationService {
     }
 
     @Path("/authorize")
-    public Object authorize() {
+    public AuthorizationTokenService getTokenService() {
         AuthorizationTokenService resource = new AuthorizationTokenService(this.authorization);
 
         ResteasyProviderFactory.getInstance().injectProperties(resource);

@@ -28,6 +28,7 @@ import org.keycloak.util.JsonSerialization;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.function.Supplier;
 
 /**
  * <p>This is class serves as an entry point for clients looking for access to Keycloak Authorization Services.
@@ -61,7 +62,7 @@ public class AuthzClient {
     }
 
     private final ServerConfiguration serverConfiguration;
-    private final Configuration deployment;
+    private final Configuration configuration;
 
     private AuthzClient(Configuration configuration, ClientAuthenticator authenticator) {
         if (configuration == null) {
@@ -76,7 +77,7 @@ public class AuthzClient {
 
         configurationUrl += "/realms/" + configuration.getRealm() + "/.well-known/uma-configuration";
 
-        this.deployment = configuration;
+        this.configuration = configuration;
 
         this.http = new Http(configuration, authenticator != null ? authenticator : configuration.getClientAuthenticator());
 
@@ -91,20 +92,29 @@ public class AuthzClient {
         this.http.setServerConfiguration(this.serverConfiguration);
     }
 
-    private AuthzClient(Configuration configuration) {
-        this(configuration, null);
-    }
-
     public ProtectionResource protection() {
-        return new ProtectionResource(this.http, obtainAccessToken().getToken());
+        return protection(obtainAccessToken().getToken());
     }
 
-    public AuthorizationResource authorization(String accesstoken) {
-        return new AuthorizationResource(this.http, accesstoken);
+    public ProtectionResource protection(String accessToken) {
+        return new ProtectionResource(this.http, configuration, accessToken);
     }
 
-    public AuthorizationResource authorization(String userName, String password) {
-        return new AuthorizationResource(this.http, obtainAccessToken(userName, password).getToken());
+    public ProtectionResource protection(String userName, String password) {
+        return protection(obtainAccessToken(userName, password).getToken());
+    }
+
+    public AuthorizationResource authorization() {
+        return new AuthorizationResource(configuration, serverConfiguration, http, null);
+    }
+
+    public AuthorizationResource authorization(final String username, final String password) {
+        return new AuthorizationResource(configuration, serverConfiguration, http, new Supplier<String>() {
+            @Override
+            public String get() {
+                return obtainAccessToken(username, password).getToken();
+            }
+        });
     }
 
     public EntitlementResource entitlement(String eat) {
@@ -134,6 +144,6 @@ public class AuthzClient {
     }
 
     public Configuration getConfiguration() {
-        return this.deployment;
+        return this.configuration;
     }
 }

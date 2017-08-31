@@ -190,6 +190,7 @@ public class ResourceService {
         resource.setName(umaResource.getName());
         resource.setUri(umaResource.getUri());
         resource.setType(umaResource.getType());
+        resource.setOwnerManagedAccess(umaResource.getOwnerManagedAccess());
 
         ResourceOwnerRepresentation owner = new ResourceOwnerRepresentation();
         String ownerId = umaResource.getOwner();

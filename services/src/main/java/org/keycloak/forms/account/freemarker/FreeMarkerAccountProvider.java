@@ -23,6 +23,7 @@ import org.keycloak.forms.account.AccountProvider;
 import org.keycloak.forms.account.freemarker.model.AccountBean;
 import org.keycloak.forms.account.freemarker.model.AccountFederatedIdentityBean;
 import org.keycloak.forms.account.freemarker.model.ApplicationsBean;
+import org.keycloak.forms.account.freemarker.model.AuthorizationBean;
 import org.keycloak.forms.account.freemarker.model.FeaturesBean;
 import org.keycloak.forms.account.freemarker.model.LogBean;
 import org.keycloak.forms.account.freemarker.model.PasswordBean;
@@ -91,6 +92,7 @@ public class FreeMarkerAccountProvider implements AccountProvider {
 
     private List<FormMessage> messages = null;
     private MessageType messageType = MessageType.ERROR;
+    private boolean authorizationSupported;
 
     public FreeMarkerAccountProvider(KeycloakSession session, FreeMarkerUtil freeMarker) {
         this.session = session;
@@ -182,7 +184,7 @@ public class FreeMarkerAccountProvider implements AccountProvider {
             attributes.put("locale", new LocaleBean(realm, locale, b, messagesBundle));
         }
 
-        attributes.put("features", new FeaturesBean(identityProviderEnabled, eventsEnabled, passwordUpdateSupported));
+        attributes.put("features", new FeaturesBean(identityProviderEnabled, eventsEnabled, passwordUpdateSupported, authorizationSupported));
         attributes.put("account", new AccountBean(user, profileFormData));
 
         switch (page) {
@@ -204,6 +206,10 @@ public class FreeMarkerAccountProvider implements AccountProvider {
                 break;
             case PASSWORD:
                 attributes.put("password", new PasswordBean(passwordSet));
+            case RESOURCES:
+                attributes.put("authorization", new AuthorizationBean(session, user, uriInfo));
+            case RESOURCE_DETAIL:
+                attributes.put("authorization", new AuthorizationBean(session, user, uriInfo));
         }
 
         try {
@@ -313,10 +319,11 @@ public class FreeMarkerAccountProvider implements AccountProvider {
     }
 
     @Override
-    public AccountProvider setFeatures(boolean identityProviderEnabled, boolean eventsEnabled, boolean passwordUpdateSupported) {
+    public AccountProvider setFeatures(boolean identityProviderEnabled, boolean eventsEnabled, boolean passwordUpdateSupported, boolean authorizationSupported) {
         this.identityProviderEnabled = identityProviderEnabled;
         this.eventsEnabled = eventsEnabled;
         this.passwordUpdateSupported = passwordUpdateSupported;
+        this.authorizationSupported = authorizationSupported;
         return this;
     }
 

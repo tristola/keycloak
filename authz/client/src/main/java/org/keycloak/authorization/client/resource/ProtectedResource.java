@@ -17,6 +17,7 @@
  */
 package org.keycloak.authorization.client.resource;
 
+import org.keycloak.authorization.client.Configuration;
 import org.keycloak.authorization.client.representation.RegistrationResponse;
 import org.keycloak.authorization.client.representation.ResourceRepresentation;
 import org.keycloak.authorization.client.util.Http;
@@ -30,16 +31,18 @@ import java.util.Set;
 public class ProtectedResource {
 
     private final Http http;
+    private Configuration configuration;
     private final String pat;
 
-    public ProtectedResource(Http http, String pat) {
+    public ProtectedResource(Http http, Configuration configuration, String pat) {
         this.http = http;
+        this.configuration = configuration;
         this.pat = pat;
     }
 
     public RegistrationResponse create(ResourceRepresentation resource) {
         try {
-            return this.http.<RegistrationResponse>post("/authz/protection/resource_set")
+            return this.http.<RegistrationResponse>post("/authz/protection/" + configuration.getResource() + "/resource_set")
                     .authorizationBearer(this.pat)
                     .json(JsonSerialization.writeValueAsBytes(resource))
                     .response().json(RegistrationResponse.class).execute();
@@ -50,7 +53,7 @@ public class ProtectedResource {
 
     public void update(ResourceRepresentation resource) {
         try {
-            this.http.<RegistrationResponse>put("/authz/protection/resource_set/" + resource.getId())
+            this.http.<RegistrationResponse>put("/authz/protection/" + configuration.getResource() + "/resource_set/" + resource.getId())
                     .authorizationBearer(this.pat)
                     .json(JsonSerialization.writeValueAsBytes(resource)).execute();
         } catch (Exception e) {
@@ -60,7 +63,7 @@ public class ProtectedResource {
 
     public RegistrationResponse findById(String id) {
         try {
-            return this.http.<RegistrationResponse>get("/authz/protection/resource_set/" + id)
+            return this.http.<RegistrationResponse>get("/authz/protection/" + configuration.getResource() + "/resource_set/" + id)
                     .authorizationBearer(this.pat)
                     .response().json(RegistrationResponse.class).execute();
         } catch (Exception e) {
@@ -70,7 +73,7 @@ public class ProtectedResource {
 
     public Set<String> findByFilter(String filter) {
         try {
-            return this.http.<Set>get("/authz/protection/resource_set")
+            return this.http.<Set>get("/authz/protection/" + configuration.getResource() + "/resource_set")
                     .authorizationBearer(this.pat)
                     .param("filter", filter)
                     .response().json(Set.class).execute();
@@ -81,7 +84,7 @@ public class ProtectedResource {
 
     public Set<String> findAll() {
         try {
-            return this.http.<Set>get("/authz/protection/resource_set")
+            return this.http.<Set>get("/authz/protection/" + configuration.getResource() + "/resource_set")
                     .authorizationBearer(this.pat)
                     .response().json(Set.class).execute();
         } catch (Exception e) {
@@ -91,7 +94,7 @@ public class ProtectedResource {
 
     public void delete(String id) {
         try {
-            this.http.delete("/authz/protection/resource_set/" + id)
+            this.http.delete("/authz/protection/" + configuration.getResource() + "/resource_set/" + id)
                     .authorizationBearer(this.pat)
                     .execute();
         } catch (Exception e) {

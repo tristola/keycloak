@@ -19,6 +19,7 @@ package org.keycloak.authorization.entitlement;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -37,7 +38,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -167,7 +167,7 @@ public class EntitlementService {
             List<Permission> entitlements = Permissions.permits(result, metadata, authorization, resourceServer);
 
             if (!entitlements.isEmpty()) {
-                return Cors.add(request, Response.ok().entity(new EntitlementResponse(createRequestingPartyToken(entitlements, identity.getAccessToken())))).allowedOrigins(identity.getAccessToken()).allowedMethods("GET").exposedHeaders(Cors.ACCESS_CONTROL_ALLOW_METHODS).build();
+                return Cors.add(request, Response.ok().entity(new EntitlementResponse(createRequestingPartyToken(entitlements, identity.getAccessToken(), resourceServer)))).allowedOrigins(identity.getAccessToken()).allowedMethods("GET").exposedHeaders(Cors.ACCESS_CONTROL_ALLOW_METHODS).build();
             }
         } catch (Exception cause) {
             logger.error(cause);
@@ -184,12 +184,18 @@ public class EntitlementService {
                 .exposedHeaders(Cors.ACCESS_CONTROL_ALLOW_METHODS).build();
     }
 
-    private String createRequestingPartyToken(List<Permission> permissions, AccessToken accessToken) {
+    private String createRequestingPartyToken(List<Permission> permissions, AccessToken accessToken, ResourceServer resourceServer) {
         RealmModel realm = this.authorization.getKeycloakSession().getContext().getRealm();
         AccessToken.Authorization authorization = new AccessToken.Authorization();
 
         authorization.setPermissions(permissions);
         accessToken.setAuthorization(authorization);
+
+        ClientModel clientModel = realm.getClientById(resourceServer.getClientId());
+
+        if (!accessToken.hasAudience(clientModel.getClientId())) {
+            accessToken.audience(clientModel.getClientId());
+        }
 
         return new TokenManager().encodeToken(this.authorization.getKeycloakSession(), realm, accessToken);
     }
@@ -205,20 +211,25 @@ public class EntitlementService {
                 break;
             }
 
-            Resource resource;
+            Resource resource = null;
 
             if (requestedResource.getResourceSetId() != null) {
                 resource = storeFactory.getResourceStore().findById(requestedResource.getResourceSetId(), resourceServer.getId());
-            } else {
-                resource = storeFactory.getResourceStore().findByName(requestedResource.getResourceSetName(), resourceServer.getId());
+
+                if (resource == null) {
+                    resource = storeFactory.getResourceStore().findByName(requestedResource.getResourceSetId(), resourceServer.getId());
+                }
             }
 
             if (resource == null && (requestedResource.getScopes() == null || requestedResource.getScopes().isEmpty())) {
-                throw new ErrorResponseException("invalid_resource", "Resource with id [" + requestedResource.getResourceSetId() + "] or name [" + requestedResource.getResourceSetName() + "] does not exist.", Status.FORBIDDEN);
+                throw new ErrorResponseException("invalid_resource", "Resource with id [" + requestedResource.getResourceSetId() + "] does not exist.", Status.FORBIDDEN);
             }
 
-            Set<ScopeRepresentation> requestedScopes = requestedResource.getScopes().stream().map(ScopeRepresentation::new).collect(Collectors.toSet());
-            Set<String> scopeNames = requestedScopes.stream().map(ScopeRepresentation::getName).collect(Collectors.toSet());
+            Set<String> scopeNames = requestedResource.getScopes();
+
+            if (scopeNames == null) {
+                scopeNames = Collections.emptySet();
+            }
 
             if (resource != null) {
                 permissionsToEvaluate.put(resource.getId(), scopeNames);
@@ -230,8 +241,8 @@ public class EntitlementService {
                 ScopeStore scopeStore = authorization.getStoreFactory().getScopeStore();
                 List<Resource> resources = new ArrayList<>();
 
-                resources.addAll(resourceStore.findByScope(requestedScopes.stream().map(scopeRepresentation -> {
-                    Scope scope = scopeStore.findByName(scopeRepresentation.getName(), resourceServer.getId());
+                resources.addAll(resourceStore.findByScope(scopeNames.stream().map(scopeName -> {
+                    Scope scope = scopeStore.findByName(scopeName, resourceServer.getId());
 
                     if (scope == null) {
                         return null;

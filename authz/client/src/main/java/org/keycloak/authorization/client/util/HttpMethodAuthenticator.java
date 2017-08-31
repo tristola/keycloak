@@ -46,4 +46,21 @@ public class HttpMethodAuthenticator<R> {
         this.method.params.put("password", password);
         return this.method;
     }
+
+    public HttpMethod<R> uma() {
+        client();
+        method.params.put(OAuth2Constants.GRANT_TYPE, OAuth2Constants.UMA_GRANT_TYPE);
+        return method;
+    }
+
+    public HttpMethod<R> uma(String ticket, String claimToken, String claimTokenFormat, String pct, String rpt, String scope) {
+        uma();
+        method.param("ticket", ticket);
+        method.param("claim_token", claimToken);
+        method.param("claim_token_format", claimTokenFormat);
+        method.param("pct", pct);
+        method.param("rpt", rpt);
+        method.param("scope", scope);
+        return method;
+    }
 }

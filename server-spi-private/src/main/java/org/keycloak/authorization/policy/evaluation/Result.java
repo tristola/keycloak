@@ -20,9 +20,11 @@ package org.keycloak.authorization.policy.evaluation;
 
 import org.keycloak.authorization.Decision.Effect;
 import org.keycloak.authorization.model.Policy;
+import org.keycloak.authorization.model.Scope;
 import org.keycloak.authorization.permission.ResourcePermission;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -73,6 +75,7 @@ public class Result {
         private final Policy policy;
         private List<PolicyResult> associatedPolicies = new ArrayList<>();
         private Effect status;
+        private List<Scope> scopes;
 
         public PolicyResult(Policy policy) {
             this.policy = policy;
@@ -115,6 +118,20 @@ public class Result {
 
         public void setStatus(final Effect status) {
             this.status = status;
+        }
+
+        public void addScope(Scope scope) {
+            if (scopes == null) {
+                scopes = new ArrayList<>();
+            }
+            scopes.add(scope);
+        }
+
+        public List<Scope> getScopes() {
+            if (scopes == null) {
+                return Collections.emptyList();
+            }
+            return scopes;
         }
     }
 }

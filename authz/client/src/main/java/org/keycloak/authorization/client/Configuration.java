@@ -25,6 +25,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.keycloak.representations.adapters.config.AdapterConfig;
 import org.keycloak.util.BasicAuthHelper;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * @author <a href="mailto:psilva@redhat.com">Pedro Igor</a>
@@ -34,11 +35,23 @@ public class Configuration extends AdapterConfig {
     @JsonIgnore
     private HttpClient httpClient;
 
+    @JsonProperty("authorization")
+    private AuthorizationConfiguration settings;
+
     public Configuration() {
 
     }
 
     public Configuration(String authServerUrl, String realm, String clientId, Map<String, Object> clientCredentials, HttpClient httpClient) {
+        this(null, authServerUrl, realm, clientId, clientCredentials, httpClient);
+    }
+
+    public Configuration(String apiVersion, String authServerUrl, String realm, String clientId, Map<String, Object> clientCredentials, HttpClient httpClient) {
+        if (apiVersion != null) {
+            settings = new AuthorizationConfiguration(apiVersion);
+        } else {
+            settings = new AuthorizationConfiguration();
+        }
         this.authServerUrl = authServerUrl;
         setAuthServerUrl(authServerUrl);
         setRealm(realm);
@@ -71,5 +84,33 @@ public class Configuration extends AdapterConfig {
 
     public ClientAuthenticator getClientAuthenticator() {
         return this.clientAuthenticator;
+    }
+
+    public AuthorizationConfiguration getAuthorization() {
+        if (settings == null) {
+            settings = new AuthorizationConfiguration();
+        }
+        return settings;
+    }
+
+    public static final class AuthorizationConfiguration {
+
+        private String apiVersion;
+
+        public AuthorizationConfiguration() {
+            this("v1");
+        }
+
+        public AuthorizationConfiguration(String version) {
+            apiVersion = version;
+        }
+
+        public String getApiVersion() {
+            return apiVersion;
+        }
+
+        public boolean isVersion(String version) {
+            return version.equals(getApiVersion());
+        }
     }
 }
